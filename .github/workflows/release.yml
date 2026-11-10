@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        run: swift test
+
+      - name: Build app
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}" ./build.sh
+
+      - name: Package
+        run: |
+          ZIP="FlagSentry-${GITHUB_REF_NAME#v}-macos.zip"
+          ditto -c -k --keepParent build/FlagSentry.app "$ZIP"
+          shasum -a 256 "$ZIP" > "$ZIP.sha256"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" FlagSentry-*-macos.zip* \
+            --title "$GITHUB_REF_NAME" --generate-notes

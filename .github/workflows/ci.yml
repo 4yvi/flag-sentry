@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that sources are English only
+        run: |
+          if grep -rnP '[А-Яа-яЁё]' . --exclude-dir=.git --exclude-dir=build --exclude-dir=.build --exclude=NOTES.md; then
+            echo "Non-English text found"; exit 1
+          fi
+
+      - name: Test
+        run: swift test
+
+      - name: Build app
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: ./build.sh
+
+      - name: Package
+        run: |
+          ditto -c -k --keepParent build/FlagSentry.app "FlagSentry-${GITHUB_SHA::7}-macos.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FlagSentry-macos
+          path: FlagSentry-*-macos.zip
+          retention-days: 30

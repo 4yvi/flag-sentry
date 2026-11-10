@@ -1,30 +1,60 @@
 name: Release
 
+# Every merge into main publishes a new version.
+# Bump rules (based on the last commit subject, i.e. the squashed PR title):
+#   "type!:" or "BREAKING CHANGE" -> major, "feat:" -> minor, anything else -> patch.
+# Add "[skip release]" to the PR title to merge without releasing.
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: ver
+        run: |
+          LAST=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)
+          LAST=${LAST:-v0.0.0}
+          IFS=. read -r MA MI PA <<< "${LAST#v}"
+          SUBJECT=$(git log -1 --format=%s)
+          BODY=$(git log -1 --format=%b)
+          if [[ "$SUBJECT" =~ ^[a-z]+(\(.+\))?!: ]] || [[ "$BODY" == *"BREAKING CHANGE"* ]]; then
+            MA=$((MA+1)); MI=0; PA=0
+          elif [[ "$SUBJECT" =~ ^feat(\(.+\))?: ]]; then
+            MI=$((MI+1)); PA=0
+          else
+            PA=$((PA+1))
+          fi
+          echo "version=$MA.$MI.$PA" >> "$GITHUB_OUTPUT"
+          echo "Releasing $MA.$MI.$PA (previous $LAST)"
 
       - name: Test
         run: swift test
 
       - name: Build app
         env:
+          VERSION: ${{ steps.ver.outputs.version }}
           BUILD_NUMBER: ${{ github.run_number }}
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}" ./build.sh
+        run: ./build.sh
 
       - name: Package
         run: |
-          ZIP="FlagSentry-${GITHUB_REF_NAME#v}-macos.zip"
+          ZIP="FlagSentry-${{ steps.ver.outputs.version }}-macos.zip"
           ditto -c -k --keepParent build/FlagSentry.app "$ZIP"
           shasum -a 256 "$ZIP" > "$ZIP.sha256"
 
@@ -32,5 +62,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" FlagSentry-*-macos.zip* \
-            --title "$GITHUB_REF_NAME" --generate-notes
+          V="v${{ steps.ver.outputs.version }}"
+          gh release create "$V" FlagSentry-*-macos.zip* \
+            --target "$GITHUB_SHA" --title "$V" --generate-notes

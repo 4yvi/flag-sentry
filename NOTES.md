@@ -9,7 +9,7 @@ macOS menu-bar app (Swift, AppKit). Shows the flag of the current public IP's co
 - `Sources/FlagSentryCore/Core.swift`: symlink to `../../Core.swift` (so SwiftPM tests and `build.sh` share one source). Do not replace it with a copy.
 - `Tests/FlagSentryTests/CoreTests.swift`: XCTest unit tests (24).
 - `Package.swift`: used only for `swift test`.
-- `build.sh`: builds `build/FlagSentry.app` with swiftc + ad-hoc signing. `BUNDLE_ID=... ./build.sh` overrides the bundle ID (default `com.example.FlagSentry`).
+- `build.sh`: builds `build/FlagSentry.app` with swiftc + ad-hoc signing. `BUNDLE_ID=... ./build.sh` overrides the bundle ID (default `io.github.4yvi.FlagSentry`).
 - `Info.plist`, `FlagSentry.entitlements`: LSUIElement, ATS exception for ip-api.com, sandbox + network client.
 - `SETUP.md`: build, Xcode setup and launch-at-login check instructions.
 

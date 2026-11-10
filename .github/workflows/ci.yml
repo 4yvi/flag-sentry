@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check that sources are English only
         run: |
@@ -32,7 +32,7 @@ jobs:
         run: |
           ditto -c -k --keepParent build/FlagSentry.app "FlagSentry-${GITHUB_SHA::7}-macos.zip"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: FlagSentry-macos
           path: FlagSentry-*-macos.zip

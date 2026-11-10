@@ -6,6 +6,9 @@
 
 A tiny macOS menu-bar app that shows the flag of the country of your current public IP address and sends a notification when the IP changes (handy for checking that your VPN is really on).
 
+<p align="center"><img src="docs/screenshot.png" alt="FlagSentry in the macOS menu bar: a flag icon and a menu showing the IP address and country" width="420"></p>
+<p align="center"><sub>Illustration with a sample IP address (203.0.113.42, reserved for documentation).</sub></p>
+
 - Lives in the menu bar only (no Dock icon)
 - Checks every 30 seconds and on network changes
 - Sandboxed, network client access only
